@@ -61,9 +61,9 @@ def make_surface():
 
     tree_radius = Blend(
         {
-            0.0: blend.linear(0.1, 0.1),
-            0.3: blend.linear(0.1, 0.4, blend.exponential(0.5)),
-            0.7: blend.linear(0.4, 0.0, blend.exponential(2)),
+            0.0: blend.Linear(0.1, 0.1),
+            0.3: blend.Linear(0.1, 0.4, blend.Exponential(0.5)),
+            0.7: blend.Linear(0.4, 0.0, blend.Exponential(2)),
         },
         Connect(
             ((0, 1), ),
