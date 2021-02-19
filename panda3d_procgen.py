@@ -3,34 +3,7 @@ import sys
 from direct.showbase.ShowBase import ShowBase 
 
 import samplers
-
-
-# import basic
-# import transform
-# import blend
-
-# heightmap = basic.random_value()
-# 
-# flat_bark = transform.band(0.95, 1, heightmap)
-# # tree_radius = blend.linear(0.3, 0.1, basic.y)
-# tree_radius = blend.segmented(
-#     {
-#         0.0: blend.Linear(0.1, 0.1),
-#         0.3: blend.Linear(0.1, 0.5),
-#         0.7: blend.Linear(0.5, 0.1),
-#     },
-#     basic.y,
-# )
-# bark_vertex = transform.polar_y(
-#     basic.merge(
-#         basic.xy,
-#         transform.multiply(
-#             flat_bark,
-#             tree_radius,
-#         ),
-#     ),
-# )
-
+import blend
 
 from comp_env import CompEnv
 from comp_env import Constant
@@ -39,8 +12,8 @@ from comp_env import PolarY
 from comp_env import GraphInput
 from comp_env import Connect
 from comp_env import Blend
+from comp_env import Multiply
 
-import blend
 
 
 def make_surface():
@@ -53,10 +26,9 @@ def make_surface():
         ),
     )
 
-    high_plane = Connect(
-        ((0, 0), (0, 1), (1, 0)),
-        GraphInput('xy'),
-        Constant(0.3),
+    bark = Blend(
+        {0.0: blend.Linear(0.95, 1.0)},
+        heightmap,
     )
 
     tree_radius = Blend(
@@ -75,22 +47,19 @@ def make_surface():
         Connect(
             ((0, 0), (0, 1), (1, 0)),
             GraphInput('xy'),
-            tree_radius,
+            Multiply(
+                bark,
+                tree_radius,
+            ),
         ),
     )
 
-    rgba = Connect(
-        ((0, 0), (0, 1), (1, 0), (2, 0)),
-        GraphInput('xy'),
-        heightmap,
-        Constant(1),
-    )
-
     bark_color = Connect(
-        ((2, 0), (1, 0), (0, 0), (2, 0)),
-        heightmap,
+        ((2, 0), (3, 0), (0, 0), (1, 0)),
         Constant(0),
         Constant(1),
+        heightmap,
+        Blend({0.0: blend.Linear(1, 0)}, heightmap)
     )
 
     comp_env = CompEnv(
@@ -104,7 +73,7 @@ def make_surface():
     surface = sampler.sample(
         (samples_x, samples_y),
         wrap_x=True,
-        two_sided=True,
+        #two_sided=True,
     )
     return surface
 

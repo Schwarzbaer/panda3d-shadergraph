@@ -1,5 +1,6 @@
 import math
 import random
+from functools import reduce
 
 from panda3d.core import Vec2
 from panda3d.core import Vec3
@@ -155,6 +156,14 @@ class RandomNoise(FuncNode):
         value = random.random()
         self.samples[sample_coord] = value
         return value
+
+
+class Multiply(FuncNode):
+    dtype_out = float
+
+    def __call__(self):
+        values = [inp() for inp in self.inputs]
+        return reduce((lambda x, y: x * y), values)
 
 
 class Blend(FuncNode):
