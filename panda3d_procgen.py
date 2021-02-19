@@ -15,19 +15,22 @@ from comp_env import Blend
 from comp_env import Multiply
 
 
-
-def make_surface():
-    samples_x, samples_y = 128, 128
+def make_demo_tree():
+    unit_square = Connect(
+        ((0, 0), (0, 1), (1, 0)),
+        GraphInput('xy'),
+        Constant(0),
+    )
 
     heightmap = RandomNoise(
         Connect(
-            ((0, 0), ),
+            ((0, 0), (0, 1)),
             GraphInput('xy'),
         ),
     )
 
     bark = Blend(
-        {0.0: blend.Linear(0.95, 1.0)},
+        {0.0: blend.Linear(0.15, 1.0)},
         heightmap,
     )
 
@@ -69,6 +72,12 @@ def make_surface():
         ),
         outputs=['vertex', 'color'],
     )
+    return comp_env
+
+
+def make_surface(comp_env):
+    samples_x, samples_y = 128, 128
+
     sampler = samplers.GridSquareSampler(comp_env)
     surface = sampler.sample(
         (samples_x, samples_y),
@@ -86,9 +95,16 @@ def main():
     base.cam.look_at(0.5, 0, 0.5)
     base.set_frame_rate_meter(True)
 
-    obj = base.render.attach_new_node(make_surface())
+    demo_tree = make_demo_tree()
+    obj = base.render.attach_new_node(make_surface(demo_tree))
     obj.set_pos(0.5, 0, 0)
     obj.set_p(90)
+
+    def rotate_tree(task):
+        obj.set_h(obj.get_h() + globalClock.dt * 15)
+        return task.cont
+    base.taskMgr.add(rotate_tree)
+
     base.run()
 
 
