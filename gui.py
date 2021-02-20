@@ -21,6 +21,7 @@ class Style(enum.Enum):
     COLOR = 2
     RATIOSPLIT = 3
     TEXTSCALE = 100
+    NODEPATHSIZE = 200
 
 
 class TCGUI(DirectObject):
@@ -56,6 +57,43 @@ class TCFrame:
         left, right, bottom, top = size
         center_rl, center_bt = (left + right) / 2.0, (top + bottom) / 2.0
         self.r['text_pos'] = (center_rl, center_bt)
+
+
+class TCNodePathFrame:
+    def __init__(self, style, node):
+        self.node = node
+        self.node.reparent_to(base.aspect2d)
+        self.node_size = style[Style.NODEPATHSIZE]
+
+    def resize(self, size):
+        frame_left, frame_right, frame_bottom, frame_top = size
+        frame_width = frame_right - frame_left
+        frame_height = frame_top - frame_bottom
+        frame_aspect = frame_width / frame_height
+
+        node_left, node_right, node_bottom, node_top = self.node_size
+        node_width = node_right - node_left
+        node_height = node_top - node_bottom
+        node_aspect = node_width / node_height
+
+        if frame_aspect >= node_aspect: # Vertical axis matching
+            target_height = frame_height
+            target_width = target_height * node_aspect
+            target_horizontal_padding = (frame_width - target_width) / 2.0
+            target_vertical_padding = 0.0
+        else: # Horizontal axis matching
+            target_width = frame_width
+            target_height = target_width / node_aspect
+            target_horizontal_padding = 0.0
+            target_vertical_padding = (frame_height - target_height) / 2.0
+
+        scale_node_to_target = target_width / node_width
+        self.node.set_pos(
+            frame_left + target_horizontal_padding - node_left * scale_node_to_target,
+            0,
+            frame_top - target_vertical_padding - node_top * scale_node_to_target,
+        )
+        self.node.set_scale(scale_node_to_target)
 
 
 class TCVerticalSplitFrame:
@@ -115,8 +153,8 @@ def main():
         Style.COLOR: (0,1,0,1),
         **all_actual_frames,
     }
-    style_blue = {
-        Style.COLOR: (0,0,1,1),
+    style_node = {
+        Style.NODEPATHSIZE: (-1.2, 1.2, -1.2, 1.2),
         **all_actual_frames,
     }
 
@@ -125,7 +163,7 @@ def main():
             TCFrame(style_red),
             TCHorizontalSplitFrame(style_sub_frame,
                 TCFrame(style_green),
-                TCFrame(style_blue),
+                TCNodePathFrame(style_node, base.loader.load_model('models/smiley')),
             ),
         ),
     )
