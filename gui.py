@@ -18,10 +18,13 @@ class Axis:
 
 class Style(enum.Enum):
     SIZE = 1
-    COLOR = 2
     RATIOSPLIT = 3
-    TEXTSCALE = 100
     NODEPATHSIZE = 200
+
+
+class DirectGuiStyle(enum.Enum):
+    COLOR = 2
+    TEXTSCALE = 100
 
 
 class TCGUI(DirectObject):
@@ -44,12 +47,12 @@ class TCGUI(DirectObject):
         self.frame.resize(size)
 
 
-class TCFrame:
-    def __init__(self, style):
+class TCDirectGuiFrame:
+    def __init__(self, style, direct_gui_style):
         self.r = DirectFrame(
-            frameColor=style[Style.COLOR],
+            frameColor=direct_gui_style[DirectGuiStyle.COLOR],
             text="foo",
-            text_scale=style[Style.TEXTSCALE],
+            text_scale=direct_gui_style[DirectGuiStyle.TEXTSCALE],
         )
 
     def resize(self, size):
@@ -124,6 +127,20 @@ class TCHorizontalSplitFrame:
         self.lower_frame.resize((left, right, bottom, split_pos))
 
 
+class TCFloatingFrame:
+    def __init__(self, style, *sizes_and_subframes):
+        self.style = style
+        self.sizes = [size for size, subframe in sizes_and_subframes]
+        self.frames = [subframe for size, subframe in sizes_and_subframes]
+
+    def resize(self, size):
+        split = self.style[Style.RATIOSPLIT]
+        left, right, bottom, top = size
+        split_pos = top - split * (top - bottom)
+        self.upper_frame.resize((left, right, split_pos, top))
+        self.lower_frame.resize((left, right, bottom, split_pos))
+    
+
 def main():
     ShowBase()
     base.accept('escape', sys.exit)
@@ -142,27 +159,31 @@ def main():
     style_sub_frame = {
         Style.RATIOSPLIT: 0.4,
     }
-    all_actual_frames = {
-        Style.TEXTSCALE: 0.1,
+    style_floating_frame = {}
+
+    text_frames = {
+        DirectGuiStyle.TEXTSCALE: 0.1,
     }
     style_red = {
-        Style.COLOR: (1,0,0,1),
-        **all_actual_frames,
+        DirectGuiStyle.COLOR: (1,0,0,1),
+        **text_frames,
     }
     style_green = {
-        Style.COLOR: (0,1,0,1),
-        **all_actual_frames,
+        DirectGuiStyle.COLOR: (0,1,0,1),
+        **text_frames,
     }
     style_node = {
         Style.NODEPATHSIZE: (-1.2, 1.2, -1.2, 1.2),
-        **all_actual_frames,
     }
 
     gui = TCGUI(style_gui,
         TCVerticalSplitFrame(style_main_frame,
-            TCFrame(style_red),
+            #TCFloatingFrame(style_floating_frame,
+            #    ((0.1, 0.3, 0.3, 0.7), TCDirectGuiFrame({}, style_red)),
+            #),
+            TCDirectGuiFrame({}, style_red),
             TCHorizontalSplitFrame(style_sub_frame,
-                TCFrame(style_green),
+                TCDirectGuiFrame({}, style_green),
                 TCNodePathFrame(style_node, base.loader.load_model('models/smiley')),
             ),
         ),
