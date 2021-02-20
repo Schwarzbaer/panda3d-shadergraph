@@ -20,6 +20,7 @@ class Style(enum.Enum):
     SIZE = 1
     COLOR = 2
     RATIOSPLIT = 3
+    TEXTSCALE = 100
 
 
 class TCGUI(DirectObject):
@@ -44,10 +45,17 @@ class TCGUI(DirectObject):
 
 class TCFrame:
     def __init__(self, style):
-        self.r = DirectFrame(frameColor=style[Style.COLOR])
+        self.r = DirectFrame(
+            frameColor=style[Style.COLOR],
+            text="foo",
+            text_scale=style[Style.TEXTSCALE],
+        )
 
     def resize(self, size):
         self.r['frameSize'] = size
+        left, right, bottom, top = size
+        center_rl, center_bt = (left + right) / 2.0, (top + bottom) / 2.0
+        self.r['text_pos'] = (center_rl, center_bt)
 
 
 class TCVerticalSplitFrame:
@@ -87,7 +95,8 @@ def main():
     base.set_frame_rate_meter(True)
 
     style_gui = {
-        Style.SIZE: (Axis(-1), Axis(1), Unit(-1), Unit(1)),
+        #Style.SIZE: (Aspect(-1), Aspect(1), Aspect(-1), Aspect(1)),
+        Style.SIZE: (-1, 1, -1, 1),
     }
     style_main_frame = {
         Style.RATIOSPLIT: 0.7,
@@ -95,14 +104,20 @@ def main():
     style_sub_frame = {
         Style.RATIOSPLIT: 0.4,
     }
+    all_actual_frames = {
+        Style.TEXTSCALE: 0.1,
+    }
     style_red = {
         Style.COLOR: (1,0,0,1),
+        **all_actual_frames,
     }
     style_green = {
         Style.COLOR: (0,1,0,1),
+        **all_actual_frames,
     }
     style_blue = {
         Style.COLOR: (0,0,1,1),
+        **all_actual_frames,
     }
 
     gui = TCGUI(style_gui,
