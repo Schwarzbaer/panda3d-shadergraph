@@ -24,9 +24,9 @@ class Style(enum.Enum):
     SIZE = 1
     RATIOSPLIT = 3
     NODEPATHSIZE = 200
-    RESOLUTION = (512, 512)
-    CAMERA_POSITION = (0,-10,0)
-    NEAREST = True
+    RESOLUTION = 500
+    CAMERA_POSITION = 501
+    NEAREST = 502
 
 
 class DirectGuiStyle(enum.Enum):
