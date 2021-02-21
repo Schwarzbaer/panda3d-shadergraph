@@ -6,6 +6,14 @@ from direct.gui.DirectGui import DirectFrame
 from direct.showbase.DirectObject import DirectObject
 
 
+from panda3d.core import CardMaker
+from panda3d.core import NodePath
+from panda3d.core import FrameBufferProperties
+from panda3d.core import WindowProperties
+from panda3d.core import GraphicsPipe
+from panda3d.core import SamplerState
+
+
 class Aspect:
     def __init__(self, units):
         self.units = units
@@ -25,6 +33,10 @@ class Style(enum.Enum):
 class DirectGuiStyle(enum.Enum):
     COLOR = 2
     TEXTSCALE = 100
+
+
+class RenderToTextureStyle(enum.Enum):
+    RESOLUTION = 1
 
 
 class TCGUI(DirectObject):
@@ -99,6 +111,31 @@ class TCNodePathFrame:
         self.node.set_scale(scale_node_to_target)
 
 
+class TCRenderToTextureFrame():
+    def __init__(self, style, rtt_style, node):
+        self.node = node
+        cardmaker = CardMaker("card")
+        cardmaker.set_frame(0,1,-1,0)
+        res_x, res_y= rtt_style[RenderToTextureStyle.RESOLUTION]
+        buffer = base.win.make_texture_buffer("", res_x, res_y)
+        buffer.set_sort(-100)
+        texture = buffer.get_texture()
+        texture.set_magfilter(SamplerState.FT_nearest)
+        texture.set_minfilter(SamplerState.FT_nearest)
+        self.camera = base.make_camera(buffer)
+        self.camera.reparent_to(self.node)
+        self.camera.set_y(-5)
+        self.card = base.aspect2d.attach_new_node(cardmaker.generate())
+        self.card.set_texture(texture)
+
+    def resize(self, size):
+        frame_left, frame_right, frame_bottom, frame_top = size
+        frame_width = frame_right - frame_left
+        frame_height = frame_top - frame_bottom
+        self.card.set_pos(frame_left, 0, frame_top)
+        self.card.set_scale(frame_width, 0, frame_height)
+                
+
 class TCVerticalSplitFrame:
     def __init__(self, style, left_frame, right_frame):
         self.style = style
@@ -154,10 +191,10 @@ def main():
         Style.SIZE: (-1, 1, -1, 1),
     }
     style_main_frame = {
-        Style.RATIOSPLIT: 0.7,
+        Style.RATIOSPLIT: 0.5,
     }
     style_sub_frame = {
-        Style.RATIOSPLIT: 0.4,
+        Style.RATIOSPLIT: 0.8,
     }
     style_floating_frame = {}
 
@@ -175,20 +212,29 @@ def main():
     style_node = {
         Style.NODEPATHSIZE: (-1.2, 1.2, -1.2, 1.2),
     }
+    rtt_style = {
+        RenderToTextureStyle.RESOLUTION: (128, 128),
+    }
 
     gui = TCGUI(style_gui,
         TCVerticalSplitFrame(style_main_frame,
             #TCFloatingFrame(style_floating_frame,
             #    ((0.1, 0.3, 0.3, 0.7), TCDirectGuiFrame({}, style_red)),
             #),
-            TCDirectGuiFrame({}, style_red),
             TCHorizontalSplitFrame(style_sub_frame,
+                TCDirectGuiFrame({}, style_red),
                 TCDirectGuiFrame({}, style_green),
-                TCNodePathFrame(style_node, base.loader.load_model('models/smiley')),
+            ),
+            TCHorizontalSplitFrame(style_main_frame,
+                TCNodePathFrame(style_node,
+                    base.loader.load_model('models/smiley')
+                ),
+                TCRenderToTextureFrame({}, rtt_style,
+                    base.loader.load_model('models/smiley')
+                ),
             ),
         ),
     )
-
     base.run()
 
 
