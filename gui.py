@@ -36,8 +36,9 @@ class DirectGuiStyle(enum.Enum):
 
 
 class RenderToTextureStyle(enum.Enum):
-    RESOLUTION = 1
-
+    RESOLUTION = (512, 512)
+    CAM_POSITION = (0,-10,0)
+    NEAREST = True
 
 class TCGUI(DirectObject):
     def __init__(self, style, frame):
@@ -120,11 +121,14 @@ class TCRenderToTextureFrame():
         buffer = base.win.make_texture_buffer("", res_x, res_y)
         buffer.set_sort(-100)
         texture = buffer.get_texture()
-        texture.set_magfilter(SamplerState.FT_nearest)
-        texture.set_minfilter(SamplerState.FT_nearest)
+        if rtt_style[RenderToTextureStyle.NEAREST]:
+            texture.set_magfilter(SamplerState.FT_nearest)
+            texture.set_minfilter(SamplerState.FT_nearest)
         self.camera = base.make_camera(buffer)
         self.camera.reparent_to(self.node)
-        self.camera.set_y(-5)
+        self.camera.look_at(0,0,0)
+        pos = rtt_style[RenderToTextureStyle.CAM_POSITION]
+        self.camera.set_pos(pos)
         self.card = base.aspect2d.attach_new_node(cardmaker.generate())
         self.card.set_texture(texture)
 
@@ -214,6 +218,8 @@ def main():
     }
     rtt_style = {
         RenderToTextureStyle.RESOLUTION: (128, 128),
+        RenderToTextureStyle.CAM_POSITION: (0,-10,0),
+        RenderToTextureStyle.NEAREST: True,
     }
 
     gui = TCGUI(style_gui,
