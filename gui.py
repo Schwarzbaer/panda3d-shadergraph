@@ -5,12 +5,8 @@ from direct.showbase.ShowBase import ShowBase
 from direct.gui.DirectGui import DirectFrame
 from direct.showbase.DirectObject import DirectObject
 
-
 from panda3d.core import CardMaker
 from panda3d.core import NodePath
-from panda3d.core import FrameBufferProperties
-from panda3d.core import WindowProperties
-from panda3d.core import GraphicsPipe
 from panda3d.core import SamplerState
 
 
