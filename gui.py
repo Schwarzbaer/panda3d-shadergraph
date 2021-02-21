@@ -36,6 +36,7 @@ class RenderToTextureStyle(enum.Enum):
     CAM_POSITION = (0,-10,0)
     NEAREST = True
 
+
 class TCGUI(DirectObject):
     def __init__(self, style, frame):
         super().__init__()
