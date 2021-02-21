@@ -24,17 +24,14 @@ class Style(enum.Enum):
     SIZE = 1
     RATIOSPLIT = 3
     NODEPATHSIZE = 200
+    RESOLUTION = (512, 512)
+    CAMERA_POSITION = (0,-10,0)
+    NEAREST = True
 
 
 class DirectGuiStyle(enum.Enum):
     COLOR = 2
     TEXTSCALE = 100
-
-
-class RenderToTextureStyle(enum.Enum):
-    RESOLUTION = (512, 512)
-    CAM_POSITION = (0,-10,0)
-    NEAREST = True
 
 
 class TCGUI(DirectObject):
@@ -110,21 +107,22 @@ class TCNodePathFrame:
 
 
 class TCRenderToTextureFrame():
-    def __init__(self, style, rtt_style, node):
+    def __init__(self, style, node):
         self.node = node
+        self.style = style
         cardmaker = CardMaker("card")
         cardmaker.set_frame(0,1,-1,0)
-        res_x, res_y= rtt_style[RenderToTextureStyle.RESOLUTION]
+        res_x, res_y= self.style[Style.RESOLUTION]
         buffer = base.win.make_texture_buffer("", res_x, res_y)
         buffer.set_sort(-100)
         texture = buffer.get_texture()
-        if rtt_style[RenderToTextureStyle.NEAREST]:
+        if self.style[Style.NEAREST]:
             texture.set_magfilter(SamplerState.FT_nearest)
             texture.set_minfilter(SamplerState.FT_nearest)
         self.camera = base.make_camera(buffer)
         self.camera.reparent_to(self.node)
         self.camera.look_at(0,0,0)
-        pos = rtt_style[RenderToTextureStyle.CAM_POSITION]
+        pos = self.style[Style.CAMERA_POSITION]
         self.camera.set_pos(pos)
         self.card = base.aspect2d.attach_new_node(cardmaker.generate())
         self.card.set_texture(texture)
@@ -214,9 +212,9 @@ def main():
         Style.NODEPATHSIZE: (-1.2, 1.2, -1.2, 1.2),
     }
     rtt_style = {
-        RenderToTextureStyle.RESOLUTION: (128, 128),
-        RenderToTextureStyle.CAM_POSITION: (0,-10,0),
-        RenderToTextureStyle.NEAREST: True,
+        Style.RESOLUTION: (128, 128),
+        Style.CAMERA_POSITION: (0,-10,0),
+        Style.NEAREST: True,
     }
 
     gui = TCGUI(style_gui,
@@ -232,7 +230,7 @@ def main():
                 TCNodePathFrame(style_node,
                     base.loader.load_model('models/smiley')
                 ),
-                TCRenderToTextureFrame({}, rtt_style,
+                TCRenderToTextureFrame(rtt_style,
                     base.loader.load_model('models/smiley')
                 ),
             ),
