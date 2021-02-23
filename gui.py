@@ -21,14 +21,21 @@ class Axis:
         self.units = units
 
 
+class Renderers(enum.Enum):
+    DIRECTGUI = 1
+
+
 class Style(enum.Enum):
     SIZE = 1
-    RATIOSPLIT = 3
+    RENDERER = 2
+    RENDERSTYLE = 3
+    RATIOSPLIT = 101
     NODEPATHSIZE = 200
     RESOLUTION = 500
     CAMERA_POSITION = 501
     NEAREST = 502
     BACKGROUND_COLOR = 503
+
 
 class DirectGuiStyle(enum.Enum):
     COLOR = 2
@@ -55,15 +62,25 @@ class TCGUI(DirectObject):
         self.frame.resize(size)
 
 
-class TCDirectGuiFrame:
-    def __init__(self, style, direct_gui_style):
-        self.r = DirectFrame(
-            frameColor=direct_gui_style[DirectGuiStyle.COLOR],
-            text="foo",
-            text_scale=direct_gui_style[DirectGuiStyle.TEXTSCALE],
-        )
+class TCDemoFrame:
+    def __init__(self, style):
+        self.style = style
+        if self.style[Style.RENDERER] == Renderers.DIRECTGUI:
+            self.setup_direct_gui(style)
 
     def resize(self, size):
+        if self.style[Style.RENDERER] == Renderers.DIRECTGUI:
+            self.resize_direct_gui(size)
+
+    def setup_direct_gui(self, style):
+            direct_gui_style = style[Style.RENDERSTYLE]
+            self.r = DirectFrame(
+                frameColor=direct_gui_style[DirectGuiStyle.COLOR],
+                text="foo",
+                text_scale=direct_gui_style[DirectGuiStyle.TEXTSCALE],
+            )
+
+    def resize_direct_gui(self, size):
         self.r['frameSize'] = size
         left, right, bottom, top = size
         center_rl, center_bt = (left + right) / 2.0, (top + bottom) / 2.0
@@ -201,11 +218,20 @@ class TCFloatingFrame:
         self.frames = [subframe for size, subframe in sizes_and_subframes]
 
     def resize(self, size):
-        split = self.style[Style.RATIOSPLIT]
         left, right, bottom, top = size
-        split_pos = top - split * (top - bottom)
-        self.upper_frame.resize((left, right, split_pos, top))
-        self.lower_frame.resize((left, right, bottom, split_pos))
+        width, height = right - left, top - bottom
+
+        for frame_size, frame in zip(self.sizes, self.frames):
+            # These are fractions of 0 to 1, relative to the floating
+            # frame's size
+            f_left, f_right, f_bottom, f_top = frame_size
+            target_size = (
+                left +  width * f_left,
+                left +  width * f_right,
+                top - height * f_top,
+                top - height * f_bottom,
+            )
+            frame.resize(target_size)
     
 
 def main():
@@ -221,24 +247,40 @@ def main():
         Style.SIZE: (-1, 1, -1, 1),
     }
     style_main_frame = {
-        Style.RATIOSPLIT: 0.5,
+        Style.RATIOSPLIT: 0.3,
     }
     style_sub_frame = {
         Style.RATIOSPLIT: 0.8,
     }
     style_floating_frame = {}
 
-    text_frames = {
-        DirectGuiStyle.TEXTSCALE: 0.1,
+    # DirectGUI-using demo frames
+    demo_frames = {
+        Style.RENDERER: Renderers.DIRECTGUI,
     }
     style_red = {
-        DirectGuiStyle.COLOR: (1,0,0,1),
-        **text_frames,
+        Style.RENDERSTYLE: {
+            DirectGuiStyle.COLOR: (1,0,0,1),
+            DirectGuiStyle.TEXTSCALE: 0.1,
+        },
+        **demo_frames,
     }
     style_green = {
-        DirectGuiStyle.COLOR: (0,1,0,1),
-        **text_frames,
+        Style.RENDERSTYLE: {
+            DirectGuiStyle.COLOR: (0,1,0,1),
+            DirectGuiStyle.TEXTSCALE: 0.1,
+        },
+        **demo_frames,
     }
+    style_blue = {
+        Style.RENDERSTYLE: {
+            DirectGuiStyle.COLOR: (0,0,1,1),
+            DirectGuiStyle.TEXTSCALE: 0.1,
+        },
+        **demo_frames,
+    }
+
+    # Frame that contains an arbitrary node path
     style_node = {
         Style.NODEPATHSIZE: (-1.2, 1.2, -1.2, 1.2),
     }
@@ -249,24 +291,27 @@ def main():
     }
 
     gui = TCGUI(style_gui,
-        TCVerticalSplitFrame(style_main_frame,
-            #TCFloatingFrame(style_floating_frame,
-            #    ((0.1, 0.3, 0.3, 0.7), TCDirectGuiFrame({}, style_red)),
-            #),
-            TCHorizontalSplitFrame(style_sub_frame,
-                TCDirectGuiFrame({}, style_red),
-                TCDirectGuiFrame({}, style_green),
-            ),
-            TCHorizontalSplitFrame(style_main_frame,
-                TCNodePathFrame(style_node,
-                    base.loader.load_model('models/smiley')
-                ),
-                TCDisplayRegionFrame(rtt_style,
-                    base.loader.load_model('models/smiley')
-                ),
-            ),
+        TCVerticalSplitFrame(
+            style_main_frame,
+            TCDemoFrame(style_red),
+            TCNodePathFrame(style_node, base.loader.load_model('models/smiley'))
+            #TCDemoFrame(style_green),
         ),
     )
+        #    TCFloatingFrame(
+        #        style_floating_frame,
+        #        ((0.1, 0.3, 0.3, 0.7), TCDirectGuiFrame(style_red)),
+        #    ),
+        #    TCDirectGuiFrame(style_red),
+        #    TCHorizontalSplitFrame(
+        #        style_sub_frame,
+        #        TCDirectGuiFrame(style_green),
+        #    ),
+        #    TCHorizontalSplitFrame(style_main_frame,
+        #        TCDisplayRegionFrame(rtt_style,
+        #            base.loader.load_model('models/smiley')
+        #        ),
+        #    ),
     base.run()
 
 
