@@ -14,8 +14,7 @@ def main():
     base.set_frame_rate_meter(True)
 
     style_gui = {
-        #Style.SIZE: (Aspect(-1), Aspect(1), Aspect(-1), Aspect(1)),
-        Style.SIZE: (-1, 1, -1, 1),
+        Style.SIZE: (Aspects(-1), Aspects(1), Units(-1), Units(1)),
     }
     style_main_frame = {
         Style.RATIOSPLIT: 0.3,

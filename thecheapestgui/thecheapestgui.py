@@ -9,12 +9,12 @@ from panda3d.core import Camera
 from panda3d.core import SamplerState
 
 
-class Aspect:
+class Aspects:
     def __init__(self, units):
         self.units = units
 
 
-class Axis:
+class Units:
     def __init__(self, units):
         self.units = units
 
@@ -52,9 +52,21 @@ class TCGUI(DirectObject):
         self.trigger_resize()
 
     def trigger_resize(self):
-        size = list(self.style[Style.SIZE])
-        
-        self.resize(self.style[Style.SIZE])
+        rel_size = list(self.style[Style.SIZE])
+        left, _, bottom = base.aspect2d.find('a2dBottomLeft').get_pos()
+        right, _, top = base.aspect2d.find('a2dTopRight').get_pos()
+        aspects = [left, right, bottom, top]
+        size = []
+        for s, a in zip(rel_size, aspects):
+            if isinstance(s, Units):
+                size.append(s.units)
+            elif isinstance(s, Aspects):
+                size.append(s.units * abs(a))
+            else:
+                raise Exception(
+                    "Specify GUI size using Units and Aspects"
+                )
+        self.resize(size)
 
     def resize(self, size):
         self.frame.resize(size)
