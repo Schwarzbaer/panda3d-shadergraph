@@ -14,7 +14,12 @@ def main():
     base.set_frame_rate_meter(True)
 
     style_gui = {
-        Style.SIZE: (Aspects(-1), Aspects(1), Units(-1), Units(1)),
+        Style.SIZE: (
+            Aspects(-1),
+            Aspects(1),
+            Aspects(-1),
+            Aspects(1),
+        ),
     }
     style_main_frame = {
         Style.RATIOSPLIT: 0.3,
@@ -60,27 +65,24 @@ def main():
         Style.NEAREST: True,
     }
 
-    gui = TCGUI(style_gui,
-        TCVerticalSplitFrame(
-            style_main_frame,
+    # TCDemoFrame(style_red),
+    # TCNodePathFrame(style_node, base.loader.load_model('models/smiley'))
+    # TCVerticalSplitFrame(style_main_frame,
+    gui = TCGUI(
+        style_gui,
+        TCHorizontalSplitFrame(
+            style_sub_frame,
+            TCFloatingFrame(
+                style_floating_frame,
+                ((0, 0.2, 0, 0.5), TCDemoFrame(style_red)),
+            ),
             TCDemoFrame(style_red),
-            TCNodePathFrame(style_node, base.loader.load_model('models/smiley'))
         ),
     )
-        #    TCFloatingFrame(
-        #        style_floating_frame,
-        #        ((0.1, 0.3, 0.3, 0.7), TCDirectGuiFrame(style_red)),
-        #    ),
-        #    TCDirectGuiFrame(style_red),
-        #    TCHorizontalSplitFrame(
-        #        style_sub_frame,
-        #        TCDirectGuiFrame(style_green),
-        #    ),
-        #    TCHorizontalSplitFrame(style_main_frame,
+    
         #        TCDisplayRegionFrame(rtt_style,
         #            base.loader.load_model('models/smiley')
         #        ),
-        #    ),
     base.run()
 
 
