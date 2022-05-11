@@ -72,17 +72,17 @@ def main():
         style_gui,
         TCHorizontalSplitFrame(
             style_sub_frame,
+            TCDisplayRegionFrame(
+                rtt_style,
+                base.loader.load_model('models/smiley')
+            ),
             TCFloatingFrame(
                 style_floating_frame,
                 ((0, 0.2, 0, 0.5), TCDemoFrame(style_red)),
             ),
-            TCDemoFrame(style_red),
         ),
     )
     
-        #        TCDisplayRegionFrame(rtt_style,
-        #            base.loader.load_model('models/smiley')
-        #        ),
     base.run()
 
 

@@ -72,29 +72,55 @@ class TCGUI(DirectObject):
         self.frame.resize(size)
 
 
-class TCDemoFrame:
-    def __init__(self, style):
+class TCHorizontalSplitFrame:
+    def __init__(self, style, upper_frame, lower_frame):
         self.style = style
-        if self.style[Style.RENDERER] == Renderers.DIRECTGUI:
-            self.setup_direct_gui(style)
+        self.upper_frame = upper_frame
+        self.lower_frame = lower_frame
 
     def resize(self, size):
-        if self.style[Style.RENDERER] == Renderers.DIRECTGUI:
-            self.resize_direct_gui(size)
-
-    def setup_direct_gui(self, style):
-            direct_gui_style = style[Style.RENDERSTYLE]
-            self.r = DirectFrame(
-                frameColor=direct_gui_style[DirectGuiStyle.COLOR],
-                text="foo",
-                text_scale=direct_gui_style[DirectGuiStyle.TEXTSCALE],
-            )
-
-    def resize_direct_gui(self, size):
-        self.r['frameSize'] = size
+        split = self.style[Style.RATIOSPLIT]
         left, right, bottom, top = size
-        center_rl, center_bt = (left + right) / 2.0, (top + bottom) / 2.0
-        self.r['text_pos'] = (center_rl, center_bt)
+        split_pos = top - split * (top - bottom)
+        self.upper_frame.resize((left, right, split_pos, top))
+        self.lower_frame.resize((left, right, bottom, split_pos))
+
+
+class TCVerticalSplitFrame:
+    def __init__(self, style, left_frame, right_frame):
+        self.style = style
+        self.left_frame = left_frame
+        self.right_frame = right_frame
+
+    def resize(self, size):
+        split = self.style[Style.RATIOSPLIT]
+        left, right, bottom, top = size
+        split_pos = left + split * (right - left)
+        self.left_frame.resize((left, split_pos, bottom, top))
+        self.right_frame.resize((split_pos, right, bottom, top))
+
+
+class TCFloatingFrame:
+    def __init__(self, style, *sizes_and_subframes):
+        self.style = style
+        self.sizes = [size for size, subframe in sizes_and_subframes]
+        self.frames = [subframe for size, subframe in sizes_and_subframes]
+
+    def resize(self, size):
+        left, right, bottom, top = size
+        width, height = right - left, top - bottom
+
+        for frame_size, frame in zip(self.sizes, self.frames):
+            # These are fractions of 0 to 1, relative to the floating
+            # frame's size
+            f_left, f_right, f_bottom, f_top = frame_size
+            target_size = (
+                left +  width * f_left,
+                left +  width * f_right,
+                top - height * f_top,
+                top - height * f_bottom,
+            )
+            frame.resize(target_size)
 
 
 class TCNodePathFrame:
@@ -193,52 +219,26 @@ class TCDisplayRegionFrame():
         self.display_region.set_dimensions((l,r,u,d))
 
 
-class TCVerticalSplitFrame:
-    def __init__(self, style, left_frame, right_frame):
+class TCDemoFrame:
+    def __init__(self, style):
         self.style = style
-        self.left_frame = left_frame
-        self.right_frame = right_frame
+        if self.style[Style.RENDERER] == Renderers.DIRECTGUI:
+            self.setup_direct_gui(style)
 
     def resize(self, size):
-        split = self.style[Style.RATIOSPLIT]
-        left, right, bottom, top = size
-        split_pos = left + split * (right - left)
-        self.left_frame.resize((left, split_pos, bottom, top))
-        self.right_frame.resize((split_pos, right, bottom, top))
+        if self.style[Style.RENDERER] == Renderers.DIRECTGUI:
+            self.resize_direct_gui(size)
 
-
-class TCHorizontalSplitFrame:
-    def __init__(self, style, upper_frame, lower_frame):
-        self.style = style
-        self.upper_frame = upper_frame
-        self.lower_frame = lower_frame
-
-    def resize(self, size):
-        split = self.style[Style.RATIOSPLIT]
-        left, right, bottom, top = size
-        split_pos = top - split * (top - bottom)
-        self.upper_frame.resize((left, right, split_pos, top))
-        self.lower_frame.resize((left, right, bottom, split_pos))
-
-
-class TCFloatingFrame:
-    def __init__(self, style, *sizes_and_subframes):
-        self.style = style
-        self.sizes = [size for size, subframe in sizes_and_subframes]
-        self.frames = [subframe for size, subframe in sizes_and_subframes]
-
-    def resize(self, size):
-        left, right, bottom, top = size
-        width, height = right - left, top - bottom
-
-        for frame_size, frame in zip(self.sizes, self.frames):
-            # These are fractions of 0 to 1, relative to the floating
-            # frame's size
-            f_left, f_right, f_bottom, f_top = frame_size
-            target_size = (
-                left +  width * f_left,
-                left +  width * f_right,
-                top - height * f_top,
-                top - height * f_bottom,
+    def setup_direct_gui(self, style):
+            direct_gui_style = style[Style.RENDERSTYLE]
+            self.r = DirectFrame(
+                frameColor=direct_gui_style[DirectGuiStyle.COLOR],
+                text="foo",
+                text_scale=direct_gui_style[DirectGuiStyle.TEXTSCALE],
             )
-            frame.resize(target_size)
+
+    def resize_direct_gui(self, size):
+        self.r['frameSize'] = size
+        left, right, bottom, top = size
+        center_rl, center_bt = (left + right) / 2.0, (top + bottom) / 2.0
+        self.r['text_pos'] = (center_rl, center_bt)
