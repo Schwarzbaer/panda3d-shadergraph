@@ -91,8 +91,10 @@ def make_demo_tree():
   
     comp_env = CompEnv(
         dict(
-            vertex=unit_square,#bark_shape,
-            color=grass_color,#bark_color,
+            #vertex=unit_square,
+            vertex=bark_shape,
+            #color=grass_color,
+            color=bark_color,
         ),
         outputs=['vertex', 'color'],
     )
@@ -100,12 +102,12 @@ def make_demo_tree():
 
 
 def make_surface(comp_env):
-    samples_x, samples_y = 8, 8
+    samples_x, samples_y = 64, 64
 
     sampler = samplers.GridSquareSampler(comp_env)
     surface = sampler.sample(
         (samples_x, samples_y),
-        #wrap_x=True,
+        wrap_x=True,
         #two_sided=True,
     )
     return surface
