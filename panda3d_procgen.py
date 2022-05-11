@@ -16,12 +16,6 @@ from comp_env import Multiply
 
 
 def make_demo_tree():
-    unit_square = Connect(
-        ((0, 0), (0, 1), (1, 0)),
-        GraphInput('xy'),
-        Constant(0),
-    )
-
     heightmap = RandomNoise(
         Connect(
             ((0, 0), (0, 1)),
@@ -29,6 +23,36 @@ def make_demo_tree():
         ),
     )
 
+    # Terrain
+    unit_square = Connect(
+        ((0, 0), (1, 0), (2, 0)),
+        Multiply(  # x * 128
+            Constant(32),
+            Connect(
+                ((0, 0), ),
+                GraphInput('xy'),
+            ),
+        ),
+        Multiply(  # y * 128
+            Constant(32),
+            Connect(
+                ((0, 1), ),
+                GraphInput('xy'),
+            ),
+        ),
+        Blend({0.0: blend.Linear(0.0, 0.5)}, heightmap),
+        #Constant(0),
+    )
+
+    grass_color = Connect(
+        ((0, 0), (1, 0), (2, 0), (3, 0)),
+        Blend({0.0: blend.Linear(0.6, 0.0)}, heightmap),
+        Blend({0.0: blend.Linear(0.7, 1.0)}, heightmap),
+        Blend({0.0: blend.Linear(0.0, 0.0)}, heightmap),
+        Constant(1),
+    )
+
+    # Tree
     bark = Blend(
         {0.0: blend.Linear(0.15, 1.0)},
         heightmap,
@@ -62,13 +86,13 @@ def make_demo_tree():
         Constant(0),
         Constant(1),
         heightmap,
-        Blend({0.0: blend.Linear(1, 0)}, heightmap)
+        Blend({0.0: blend.Linear(1, 0)}, heightmap),
     )
-
+  
     comp_env = CompEnv(
         dict(
-            vertex=bark_shape,
-            color=bark_color,
+            vertex=unit_square,#bark_shape,
+            color=grass_color,#bark_color,
         ),
         outputs=['vertex', 'color'],
     )
@@ -76,12 +100,12 @@ def make_demo_tree():
 
 
 def make_surface(comp_env):
-    samples_x, samples_y = 128, 128
+    samples_x, samples_y = 8, 8
 
     sampler = samplers.GridSquareSampler(comp_env)
     surface = sampler.sample(
         (samples_x, samples_y),
-        wrap_x=True,
+        #wrap_x=True,
         #two_sided=True,
     )
     return surface
@@ -95,8 +119,11 @@ def main():
     base.cam.look_at(0.5, 0, 0.5)
     base.set_frame_rate_meter(True)
 
-    demo_tree = make_demo_tree()
-    obj = base.render.attach_new_node(make_surface(demo_tree))
+    demo_tree_env = make_demo_tree()
+    demo_tree = make_surface(demo_tree_env)
+    obj = base.render.attach_new_node(demo_tree)
+    obj.write_bam_file('output.bam')
+
     obj.set_pos(0.5, 0, 0)
     obj.set_p(90)
 
